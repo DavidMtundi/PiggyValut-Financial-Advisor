@@ -16,9 +16,9 @@
 [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=piggyvault_piggyvault&metric=sqale_index)](https://sonarcloud.io/dashboard?id=piggyvault_piggyvault)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=piggyvault_piggyvault&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=piggyvault_piggyvault)
 
-A family finance management app.
+A family finance management and Advisor app.
 
-> Piggy is a side project of [Abhith Rajan](https://www.abhith.net).
+> Piggy is a project for completion of fourth year.
 
 ## Technology Stack
 
