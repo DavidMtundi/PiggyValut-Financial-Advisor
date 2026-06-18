@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:piggy_flutter/blocs/auth/auth.dart';
 import 'package:piggy_flutter/models/login_information_result.dart';
@@ -8,9 +8,7 @@ import 'package:piggy_flutter/models/login_information_result.dart';
 import 'package:piggy_flutter/repositories/repositories.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  AuthBloc({required this.userRepository})
-      : assert(userRepository != null),
-        super(AuthUninitialized());
+  AuthBloc({required this.userRepository}) : super(AuthUninitialized());
 
   final UserRepository userRepository;
 
@@ -41,13 +39,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     if (event is LoggedIn) {
       yield AuthLoading();
-      await userRepository.persistToken(event.token!);
+      final String? token = event.token;
+      if (token == null) {
+        yield AuthUnauthenticated();
+        return;
+      }
+      await userRepository.persistToken(token);
 
       try {
-        await OneSignal.shared
-            .sendTag('tenancyName', event.tenancyName.trim().toLowerCase());
+        OneSignal.User.addTagWithKey(
+            'tenancyName', event.tenancyName.trim().toLowerCase());
       } catch (e) {
-        // print(e);
+        // Push tags are optional for local development.
       }
 
       final LoginInformationResult? result =
@@ -63,22 +66,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       yield AuthLoading();
 
       try {
-        await OneSignal.shared.deleteTag('tenancyName');
+        OneSignal.User.removeTag('tenancyName');
       } catch (error) {
-        // print(error);
+        // Push tags are optional for local development.
       }
       await userRepository.deleteToken();
       yield AuthUnauthenticated();
     }
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
   void initOnesignal() {
     try {
-      // TODO(abhith) : use secrets
-      OneSignal.shared.setAppId('9bf198c9-442b-4619-b5c9-759fc250f15b');
+      OneSignal.initialize('9bf198c9-442b-4619-b5c9-759fc250f15b');
     } catch (error) {
-      print(error);
+      debugPrint('$error');
     }
   }
 }

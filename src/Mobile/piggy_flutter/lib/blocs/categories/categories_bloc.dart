@@ -48,7 +48,7 @@ class CategoriesBloc extends Bloc<CategoriesEvent, CategoriesState> {
           await categoryRepository.getTenantCategories();
       yield CategoriesLoaded(categories);
     } catch (e) {
-      CategoriesNotLoaded();
+      yield CategoriesNotLoaded();
     }
   }
 

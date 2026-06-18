@@ -30,6 +30,8 @@
 .pub-cache/
 .pub/
 /build/
+src/Mobile/build/
+src/Mobile/piggy_flutter/android/build/
 
 # Web related
 lib/generated_plugin_registrant.dart

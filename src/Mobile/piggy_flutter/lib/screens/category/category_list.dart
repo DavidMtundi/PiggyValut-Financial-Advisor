@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_iconpicker/flutter_iconpicker.dart';
-import 'package:flutter_neumorphic/flutter_neumorphic.dart';
+import 'package:flutter_neumorphic_plus/flutter_neumorphic.dart';
 import 'package:piggy_flutter/blocs/categories/categories.dart';
 import 'package:piggy_flutter/models/category.dart';
 import 'package:piggy_flutter/repositories/repositories.dart';
@@ -73,7 +73,9 @@ class CategoryListPage extends StatelessWidget {
                     padding: const EdgeInsets.all(18.0),
                     child: NeumorphicIcon(
                       deserializeIcon(Map<String, dynamic>.from(
-                          json.decode(category.icon!)))!,
+                              json.decode(category.icon!)))
+                          ?.data ??
+                          Icons.category,
                       style: const NeumorphicStyle(
                         shape: NeumorphicShape.convex,
                         surfaceIntensity: 1.0,

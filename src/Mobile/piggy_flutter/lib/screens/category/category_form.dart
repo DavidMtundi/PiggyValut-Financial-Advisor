@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_font_icons/flutter_font_icons.dart';
-import 'package:flutter_neumorphic/flutter_neumorphic.dart';
+import 'package:flutter_neumorphic_plus/flutter_neumorphic.dart';
+import 'package:flutter_iconpicker/Models/configuration.dart';
 import 'package:flutter_iconpicker/flutter_iconpicker.dart';
 import 'package:piggy_flutter/blocs/categories/categories.dart';
 import 'package:piggy_flutter/models/category.dart';
+import 'package:piggy_flutter/theme/theme.dart';
 import 'package:piggy_flutter/utils/uidata.dart';
 import 'package:piggy_flutter/widgets/common/common.dart';
 import 'package:piggy_flutter/widgets/primary_color_override.dart';
@@ -34,14 +36,18 @@ class CategoryFormPageState extends State<CategoryFormPage> {
 
   TextEditingController? _categoryNameFieldController;
 
-  Icon? _icon;
+  IconPickerIcon? _categoryIcon;
 
   _pickIcon() async {
-    IconData? icon = await FlutterIconPicker.showIconPicker(context,
-        iconPackModes: [IconPack.fontAwesomeIcons]);
+    final IconPickerIcon? picked = await showIconPicker(
+      context,
+      configuration: SinglePickerConfiguration(
+        iconPackModes: const [IconPack.fontAwesomeIcons],
+      ),
+    );
 
-    if (icon != null) {
-      _icon = Icon(icon);
+    if (picked != null) {
+      _categoryIcon = picked;
       setState(() {});
     }
   }
@@ -52,14 +58,14 @@ class CategoryFormPageState extends State<CategoryFormPage> {
 
     if (widget.category == null) {
       _categoryNameFieldController = TextEditingController();
-      _icon = Icon(deserializeIcon(Map<String, dynamic>.from(
-          json.decode('{"pack":"fontAwesomeIcons","key":"question"}'))));
+      _categoryIcon = deserializeIcon(Map<String, dynamic>.from(
+          json.decode('{"pack":"fontAwesomeIcons","key":"question"}')));
       setState(() {});
     } else {
       _categoryNameFieldController =
           TextEditingController(text: widget.category!.name);
-      _icon = Icon(deserializeIcon(
-          Map<String, dynamic>.from(json.decode(widget.category!.icon!))));
+      _categoryIcon = deserializeIcon(
+          Map<String, dynamic>.from(json.decode(widget.category!.icon!)));
     }
   }
 
@@ -131,7 +137,7 @@ class CategoryFormPageState extends State<CategoryFormPage> {
                                 child: IconButton(
                                   icon: AnimatedSwitcher(
                                     duration: const Duration(milliseconds: 300),
-                                    child: _icon,
+                                    child: Icon(_categoryIcon!.data),
                                   ),
                                   onPressed: _pickIcon,
                                   color: Colors.blueGrey,
@@ -210,8 +216,8 @@ class CategoryFormPageState extends State<CategoryFormPage> {
     }
 
     category!.name = _categoryNameFieldController!.text;
-    if (_icon != null) {
-      category.icon = json.encode(serializeIcon(_icon!.icon!));
+    if (_categoryIcon != null) {
+      category.icon = json.encode(serializeIcon(_categoryIcon!));
     }
     widget.categoriesBloc.add(CategorySave(category: category));
   }

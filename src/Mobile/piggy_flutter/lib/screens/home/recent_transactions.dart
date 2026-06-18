@@ -153,7 +153,7 @@ class _RecentTransactionsPageState extends State<RecentTransactionsPage>
                                                   int index) {
                                             return Column(
                                               children: <Widget>[
-                                                SearchBar(
+                                                PiggySearchBar(
                                                   onSearchTextChanged: (txt) {
                                                     recentTransactionsBloc!.add(
                                                         FilterRecentTransactions(

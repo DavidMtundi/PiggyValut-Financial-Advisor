@@ -14,8 +14,8 @@ class TitleView extends StatelessWidget {
 
   const TitleView(
       {Key? key,
-      this.titleTxt: "",
-      this.subTxt: "",
+      this.titleTxt = "",
+      this.subTxt = "",
       this.animationController,
       this.animation,
       this.onPress})

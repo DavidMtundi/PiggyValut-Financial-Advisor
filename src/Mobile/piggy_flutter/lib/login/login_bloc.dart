@@ -27,6 +27,11 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
           password: event.password,
         );
 
+        if (token == null) {
+          yield LoginFailure(errorMessage: 'Invalid family, username, or password');
+          return;
+        }
+
         authBloc.add(LoggedIn(token: token, tenancyName: event.tenancyName));
         yield LoginInitial();
       } catch (error) {

@@ -4,7 +4,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_iconpicker/flutter_iconpicker.dart';
-import 'package:flutter_neumorphic/flutter_neumorphic.dart';
+import 'package:flutter_neumorphic_plus/flutter_neumorphic.dart';
 import 'package:intl/intl.dart';
 import 'package:piggy_flutter/blocs/transaction_detail/bloc.dart';
 import 'package:piggy_flutter/models/transaction.dart';
@@ -123,7 +123,9 @@ class TransactionList extends StatelessWidget {
           padding: const EdgeInsets.all(6.0),
           child: NeumorphicIcon(
             deserializeIcon(Map<String, dynamic>.from(
-                json.decode(transaction.categoryIcon!)))!,
+                    json.decode(transaction.categoryIcon!)))
+                ?.data ??
+                Icons.receipt,
             size: 24,
             style: NeumorphicStyle(
               shape: NeumorphicShape.convex,

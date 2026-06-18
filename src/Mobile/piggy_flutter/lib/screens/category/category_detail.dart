@@ -215,7 +215,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                                         (BuildContext context, int index) {
                                       return Column(
                                         children: <Widget>[
-                                          SearchBar(
+                                          PiggySearchBar(
                                             onSearchTextChanged: (txt) {
                                               categoryTransactionsBloc!.add(
                                                   FilterCategoryTransactions(

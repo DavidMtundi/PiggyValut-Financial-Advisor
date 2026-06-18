@@ -162,10 +162,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Future<void> initPlatformState() async {
     if (!mounted) return;
 
-    OneSignal.shared
-        .setNotificationOpenedHandler((OSNotificationOpenedResult result) {
-      final Map<String, dynamic> transactionData =
-          result.notification.additionalData!;
+    OneSignal.Notifications.addClickListener((OSNotificationClickEvent event) {
+      final Map<String, dynamic>? transactionData =
+          event.notification.additionalData?.cast<String, dynamic>();
+
+      if (transactionData == null) {
+        return;
+      }
 
       try {
         final Transaction transaction = Transaction(

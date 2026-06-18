@@ -21,7 +21,6 @@ import 'package:http/http.dart' as http;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'login/login.dart';
-import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -33,23 +32,27 @@ Future<void> main() async {
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
 
-  final IOSInitializationSettings initializationSettingsIOS =
-      IOSInitializationSettings();
-  const MacOSInitializationSettings initializationSettingsMacOS =
-      MacOSInitializationSettings();
+  const DarwinInitializationSettings initializationSettingsDarwin =
+      DarwinInitializationSettings();
   final InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-      macOS: initializationSettingsMacOS);
+      iOS: initializationSettingsDarwin,
+      macOS: initializationSettingsDarwin);
+
   await flutterLocalNotificationsPlugin.initialize(initializationSettings,
-      onSelectNotification: (String? payload) async {
+      onDidReceiveNotificationResponse: (NotificationResponse response) async {
+    final String? payload = response.payload;
     if (payload != null) {
       debugPrint('notification payload: $payload');
     }
   });
 
   await _cancelAllNotifications();
-  await _scheduleReminderNotification();
+  try {
+    await _scheduleReminderNotification();
+  } catch (error) {
+    debugPrint('Reminder notification not scheduled: $error');
+  }
 
   final PiggyApiClient piggyApiClient = PiggyApiClient(
     httpClient: http.Client(),
@@ -130,8 +133,7 @@ Future<void> main() async {
 
 Future<void> _configureLocalTimeZone() async {
   tz.initializeTimeZones();
-  final String timeZoneName = await FlutterNativeTimezone.getLocalTimezone();
-  tz.setLocalLocation(tz.getLocation(timeZoneName));
+  tz.setLocalLocation(tz.UTC);
 }
 
 Future<void> _cancelAllNotifications() async {
@@ -139,17 +141,21 @@ Future<void> _cancelAllNotifications() async {
 }
 
 Future<void> _scheduleReminderNotification() async {
-  await flutterLocalNotificationsPlugin.zonedSchedule(
-      0,
-      'Forget something to add?',
-      "Looks like it's been awhile...",
-      tz.TZDateTime.now(tz.local).add(const Duration(days: 1)),
-      const NotificationDetails(
-          android: AndroidNotificationDetails('Reminder', 'Reminder',
-              channelDescription: 'To remind you about saving transactions')),
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime);
+  try {
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+        0,
+        'Forget something to add?',
+        "Looks like it's been awhile...",
+        tz.TZDateTime.now(tz.local).add(const Duration(days: 1)),
+        const NotificationDetails(
+            android: AndroidNotificationDetails('Reminder', 'Reminder',
+                channelDescription: 'To remind you about saving transactions')),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime);
+  } catch (error) {
+    debugPrint('Reminder notification not scheduled: $error');
+  }
 }
 
 class App extends StatelessWidget {

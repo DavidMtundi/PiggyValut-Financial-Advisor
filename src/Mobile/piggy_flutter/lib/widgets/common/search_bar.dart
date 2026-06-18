@@ -5,10 +5,10 @@ import 'package:piggy_flutter/theme/theme.dart';
 
 typedef SearchBarCallback = FutureOr<void> Function(String searchText);
 
-class SearchBar extends StatelessWidget {
+class PiggySearchBar extends StatelessWidget {
   final SearchBarCallback onSearchTextChanged;
 
-  const SearchBar({
+  const PiggySearchBar({
     Key? key,
     required this.onSearchTextChanged,
   }) : super(key: key);

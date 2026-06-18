@@ -82,7 +82,7 @@ class _LoginFormState extends State<LoginForm> {
                       style: TextStyle(color: Colors.white),
                     ),
                     style: ElevatedButton.styleFrom(
-                        primary: Colors.green,
+                        backgroundColor: Colors.green,
                         padding: EdgeInsets.all(12.0),
                         shape: StadiumBorder()),
                     onPressed:
@@ -123,6 +123,7 @@ class _LoginFormState extends State<LoginForm> {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 30.0),
         child: TextFormField(
+          key: const Key('login_family_field'),
           maxLines: 1,
           controller: _tenancyNameController,
           decoration: InputDecoration(
@@ -142,6 +143,7 @@ class _LoginFormState extends State<LoginForm> {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 0.0, horizontal: 30.0),
         child: TextField(
+          key: const Key('login_username_field'),
           maxLines: 1,
           controller: _usernameController,
           decoration: InputDecoration(
@@ -161,6 +163,7 @@ class _LoginFormState extends State<LoginForm> {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 0.0, horizontal: 30.0),
         child: TextField(
+          key: const Key('login_password_field'),
           maxLines: 1,
           controller: _passwordController,
           obscureText: true,

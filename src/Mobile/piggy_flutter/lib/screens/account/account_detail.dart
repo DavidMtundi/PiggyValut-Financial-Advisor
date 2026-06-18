@@ -222,7 +222,7 @@ class _AccountDetailPageState extends State<AccountDetailPage>
                                         (BuildContext context, int index) {
                                       return Column(
                                         children: <Widget>[
-                                          SearchBar(
+                                          PiggySearchBar(
                                             onSearchTextChanged: (txt) {
                                               accountTransactionsBloc!.add(
                                                   FilterAccountTransactions(
