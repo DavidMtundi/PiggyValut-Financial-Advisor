@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:piggy_flutter/models/models.dart';
 import 'package:piggy_flutter/repositories/piggy_api_client.dart';
 import 'package:piggy_flutter/utils/uidata.dart';
@@ -12,25 +11,79 @@ class UserRepository {
   UserRepository({required this.piggyApiClient})
       : assert(piggyApiClient != null);
 
-  Future<String?> authenticate(
-      {required String tenancyName,
-      required String usernameOrEmailAddress,
-      required String password}) async {
+  Future<bool> resolveTenant(String tenancyName) async {
     final isTenantAvailableResult =
         await piggyApiClient.isTenantAvailable(tenancyName);
 
     if (isTenantAvailableResult.state == 1) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(UIData.tenantId, isTenantAvailableResult.tenantId!);
-
-      final authenticateResult = await piggyApiClient.authenticate(
-          usernameOrEmailAddress: usernameOrEmailAddress, password: password);
-
-      return authenticateResult.accessToken;
+      return true;
     }
 
-    // TODO: handle invalid tenant cases
-    return null;
+    return false;
+  }
+
+  Future<String?> authenticate(
+      {required String tenancyName,
+      required String usernameOrEmailAddress,
+      required String password}) async {
+    if (!await resolveTenant(tenancyName)) {
+      return null;
+    }
+
+    final authenticateResult = await piggyApiClient.authenticate(
+        usernameOrEmailAddress: usernameOrEmailAddress, password: password);
+
+    return authenticateResult.accessToken;
+  }
+
+  Future<RegisterResult> register({
+    required String tenancyName,
+    required String name,
+    required String surname,
+    required String userName,
+    required String emailAddress,
+    required String password,
+  }) async {
+    if (!await resolveTenant(tenancyName)) {
+      throw Exception('Family not found. Check your family name and try again.');
+    }
+
+    return piggyApiClient.register(
+      name: name,
+      surname: surname,
+      userName: userName,
+      emailAddress: emailAddress,
+      password: password,
+    );
+  }
+
+  Future<String?> externalAuthenticate({
+    required String tenancyName,
+    required String authProvider,
+    required String providerKey,
+    required String providerAccessCode,
+  }) async {
+    if (!await resolveTenant(tenancyName)) {
+      return null;
+    }
+
+    final result = await piggyApiClient.externalAuthenticate(
+      authProvider: authProvider,
+      providerKey: providerKey,
+      providerAccessCode: providerAccessCode,
+    );
+
+    if (result.waitingForActivation) {
+      throw Exception('Account created. Please wait for activation.');
+    }
+
+    return result.accessToken;
+  }
+
+  Future<List<ExternalLoginProvider>> getExternalLoginProviders() async {
+    return piggyApiClient.getExternalAuthenticationProviders();
   }
 
   Future<LoginInformationResult?> getCurrentLoginInformation() async {
@@ -57,7 +110,6 @@ class UserRepository {
   }
 
   Future<void> persistToken(String token) async {
-    /// write to keystore/keychain
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(UIData.authToken, token);
     return;

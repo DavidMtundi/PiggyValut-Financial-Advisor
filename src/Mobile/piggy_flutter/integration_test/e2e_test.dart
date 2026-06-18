@@ -25,7 +25,13 @@ Future<void> _pumpUntilFound(
   fail('Timed out waiting for $finder. Visible text: $texts');
 }
 
-Future<void> _skipIntroIfNeeded(WidgetTester tester) async {
+Future<void> _skipOnboardingIfNeeded(WidgetTester tester) async {
+  if (find.byKey(const Key('onboarding_skip_button')).evaluate().isNotEmpty) {
+    await tester.tap(find.byKey(const Key('onboarding_skip_button')));
+    await tester.pumpAndSettle(const Duration(seconds: 2));
+    return;
+  }
+
   if (find.text('SKIP').evaluate().isNotEmpty) {
     await tester.tap(find.text('SKIP'));
     await tester.pumpAndSettle(const Duration(seconds: 1));
@@ -40,12 +46,12 @@ Future<void> _waitForAppReady(WidgetTester tester) async {
   final end = DateTime.now().add(const Duration(seconds: 60));
   while (DateTime.now().isBefore(end)) {
     await tester.pump(const Duration(milliseconds: 500));
-    if (find.text('This month').evaluate().isNotEmpty ||
-        find.text('Sign in to continue').evaluate().isNotEmpty ||
+    if (find.byIcon(Icons.add).evaluate().isNotEmpty ||
+        find.byKey(const Key('login_subtitle')).evaluate().isNotEmpty ||
+        find.byKey(const Key('onboarding_skip_button')).evaluate().isNotEmpty ||
+        find.text('Track together').evaluate().isNotEmpty ||
         find.text('SKIP').evaluate().isNotEmpty ||
-        find.text('DONE').evaluate().isNotEmpty ||
-        find.text('Travel more').evaluate().isNotEmpty ||
-        find.byIcon(Icons.add).evaluate().isNotEmpty) {
+        find.text('DONE').evaluate().isNotEmpty) {
       await tester.pumpAndSettle(const Duration(milliseconds: 200));
       return;
     }
@@ -60,21 +66,24 @@ Future<void> _ensureLoggedIn(WidgetTester tester) async {
     return;
   }
 
-  await _skipIntroIfNeeded(tester);
+  await _skipOnboardingIfNeeded(tester);
   await tester.pumpAndSettle(const Duration(seconds: 3));
 
   if (find.byIcon(Icons.add).evaluate().isNotEmpty) {
     return;
   }
 
-  if (find.text('Travel more').evaluate().isNotEmpty) {
-    // Swipe through intro pages to reach DONE
+  if (find.text('Track together').evaluate().isNotEmpty) {
     for (var i = 0; i < 3; i++) {
-      if (find.text('DONE').evaluate().isNotEmpty) {
-        await tester.tap(find.text('DONE'));
+      if (find.byKey(const Key('onboarding_done_button')).evaluate().isNotEmpty) {
+        await tester.tap(find.byKey(const Key('onboarding_done_button')));
         break;
       }
-      await tester.tap(find.text('NEXT'));
+      if (find.byKey(const Key('onboarding_next_button')).evaluate().isNotEmpty) {
+        await tester.tap(find.byKey(const Key('onboarding_next_button')));
+      } else if (find.text('NEXT').evaluate().isNotEmpty) {
+        await tester.tap(find.text('NEXT'));
+      }
       await tester.pumpAndSettle(const Duration(seconds: 1));
     }
     await tester.pumpAndSettle(const Duration(seconds: 3));
@@ -84,7 +93,7 @@ Future<void> _ensureLoggedIn(WidgetTester tester) async {
     return;
   }
 
-  await _pumpUntilFound(tester, find.text('Sign in to continue'));
+  await _pumpUntilFound(tester, find.byKey(const Key('login_subtitle')));
 
   final familyField = find.byKey(const Key('login_family_field'));
   final usernameField = find.byKey(const Key('login_username_field'));
@@ -97,10 +106,9 @@ Future<void> _ensureLoggedIn(WidgetTester tester) async {
   await tester.tap(passwordField);
   await tester.enterText(passwordField, '123qwe');
 
-  await tester.tap(find.text('SIGN IN'));
+  await tester.tap(find.byKey(const Key('login_sign_in_button')));
   await tester.pump(const Duration(seconds: 2));
 
-  // Allow time for auth API round-trip
   for (var attempt = 0; attempt < 45; attempt++) {
     await tester.pump(const Duration(seconds: 2));
     if (find.byIcon(Icons.add).evaluate().isNotEmpty) {
@@ -133,11 +141,10 @@ void main() {
     await app.main();
     await tester.pumpAndSettle(const Duration(seconds: 2));
 
-    await _skipIntroIfNeeded(tester);
+    await _skipOnboardingIfNeeded(tester);
     await _ensureLoggedIn(tester);
     expect(find.byIcon(Icons.add), findsOneWidget);
 
-    // Bottom navigation tabs (MaterialCommunityIcons)
     final bottomNavY = tester.getSize(find.byType(MaterialApp)).height - 80;
     await tester.tapAt(Offset(120, bottomNavY));
     await tester.pumpAndSettle(const Duration(seconds: 3));
@@ -151,7 +158,6 @@ void main() {
     await tester.tapAt(Offset(40, bottomNavY));
     await _pumpUntilFound(tester, find.byIcon(Icons.add));
 
-    // Drawer: categories, reports, settings
     await _openDrawer(tester);
     await tester.tap(find.text('Categories'));
     await tester.pumpAndSettle(const Duration(seconds: 5));
@@ -176,17 +182,29 @@ void main() {
     await tester.tap(find.text('Home'));
     await tester.pumpAndSettle(const Duration(seconds: 2));
 
-    // Add transaction FAB opens form
     await tester.tap(find.byIcon(Icons.add));
     await tester.pumpAndSettle(const Duration(seconds: 3));
     expect(find.text('Amount'), findsWidgets);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle(const Duration(seconds: 2));
 
-    // Logout
     await _openDrawer(tester);
     await tester.tap(find.text('Logout'));
-    await _pumpUntilFound(tester, find.text('Sign in to continue'));
-    expect(find.text('SIGN IN'), findsOneWidget);
+    await _pumpUntilFound(tester, find.byKey(const Key('login_subtitle')));
+    expect(find.byKey(const Key('login_sign_in_button')), findsOneWidget);
+  });
+
+  testWidgets('sign up form is reachable and validates family field', (tester) async {
+    await app.main();
+    await tester.pumpAndSettle(const Duration(seconds: 2));
+    await _skipOnboardingIfNeeded(tester);
+    await _pumpUntilFound(tester, find.byKey(const Key('login_subtitle')));
+
+    await tester.tap(find.byKey(const Key('login_tab_sign_up')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('signup_family_field')), findsOneWidget);
+    expect(find.byKey(const Key('login_sign_up_button')), findsOneWidget);
+    expect(find.text('Create Account'), findsOneWidget);
   });
 }

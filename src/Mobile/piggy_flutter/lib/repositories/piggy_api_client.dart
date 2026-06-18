@@ -64,6 +64,63 @@ class PiggyApiClient {
     return AuthenticateResult.fromJson(loginResult.result);
   }
 
+  Future<List<ExternalLoginProvider>> getExternalAuthenticationProviders() async {
+    final response = await getAsyncWithoutAuth<List<dynamic>>(
+        '$baseUrl/api/TokenAuth/GetExternalAuthenticationProviders');
+
+    if (!response.success! || response.result == null) {
+      return [];
+    }
+
+    return (response.result as List)
+        .map((item) => ExternalLoginProvider.fromJson(item))
+        .toList();
+  }
+
+  Future<ExternalAuthenticateResult> externalAuthenticate({
+    required String authProvider,
+    required String providerKey,
+    required String providerAccessCode,
+  }) async {
+    final response = await postAsync<dynamic>(
+        '$baseUrl/api/TokenAuth/ExternalAuthenticate',
+        {
+          'authProvider': authProvider,
+          'providerKey': providerKey,
+          'providerAccessCode': providerAccessCode,
+        });
+
+    if (!response.success!) {
+      throw Exception(response.error ?? 'Google sign-in failed');
+    }
+
+    return ExternalAuthenticateResult.fromJson(response.result);
+  }
+
+  Future<RegisterResult> register({
+    required String name,
+    required String surname,
+    required String userName,
+    required String emailAddress,
+    required String password,
+  }) async {
+    final response = await postAsync<dynamic>(
+        '$baseUrl/api/services/app/Account/Register',
+        {
+          'name': name,
+          'surname': surname,
+          'userName': userName,
+          'emailAddress': emailAddress,
+          'password': password,
+        });
+
+    if (!response.success!) {
+      throw Exception(response.error ?? 'Registration failed');
+    }
+
+    return RegisterResult.fromJson(response.result);
+  }
+
   Future<LoginInformationResult?> getCurrentLoginInformations() async {
     const String userUrl =
         '$baseUrl/api/services/app/session/GetCurrentLoginInformations';
@@ -294,6 +351,22 @@ class PiggyApiClient {
   }
 
 // utils
+
+  Future<ApiResponse<T?>> getAsyncWithoutAuth<T>(String resourcePath) async {
+    final prefs = await SharedPreferences.getInstance();
+    final tenantId = prefs.getInt(UIData.tenantId);
+    final url = Uri.parse(resourcePath);
+    final headers = <String, String>{
+      'Content-type': 'application/json',
+      'Accept': 'application/json',
+    };
+    if (tenantId != null) {
+      headers['Piggy-TenantId'] = tenantId.toString();
+    }
+
+    final response = await httpClient.get(url, headers: headers);
+    return processResponse<T>(response);
+  }
 
   Future<ApiResponse<T?>> getAsync<T>(String resourcePath) async {
     final prefs = await SharedPreferences.getInstance();

@@ -13,7 +13,7 @@ import 'package:piggy_flutter/blocs/transaction_detail/bloc.dart';
 import 'package:piggy_flutter/blocs/transaction_summary/transaction_summary_bloc.dart';
 import 'package:piggy_flutter/repositories/repositories.dart';
 import 'package:piggy_flutter/screens/home/home_screen.dart';
-import 'package:piggy_flutter/screens/intro_views/intro_views.dart';
+import 'package:piggy_flutter/screens/onboarding/onboarding_screen.dart';
 import 'package:piggy_flutter/splash/splash.dart';
 import 'package:piggy_flutter/theme/piggy_app_theme.dart';
 import 'package:piggy_flutter/utils/uidata.dart';
@@ -202,11 +202,7 @@ class App extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'Piggy',
-        theme: ThemeData(
-            primarySwatch: Colors.blue,
-            textTheme: PiggyAppTheme.textTheme,
-            platform: TargetPlatform.iOS,
-            primaryColor: Colors.white),
+        theme: PiggyAppTheme.buildLightTheme(),
         home: BlocBuilder<AuthBloc, AuthState>(builder: (context, state) {
           if (state is AuthAuthenticated) {
             return const HomeScreen();
@@ -215,9 +211,9 @@ class App extends StatelessWidget {
             return LoginPage(userRepository: userRepository);
           }
           if (state is FirstAccess) {
-            return IntroViews();
+            return const OnboardingScreen();
           }
-          return SplashPage();
+          return const SplashPage();
         }),
         routes: <String, WidgetBuilder>{
           UIData.loginRoute: (BuildContext context) => LoginPage(
